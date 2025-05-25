@@ -11,7 +11,7 @@ import { useNavigate } from "react-router-dom";
 import FlexBetween from "./FlexBetween";
 import { useDispatch, useSelector } from "react-redux";
 import { setMode } from "../state";
-import profileImage from "../assets/profilePic.jpg";
+
 import logo from "../assets/AdPilot.png";
 import {
   AppBar,
@@ -58,6 +58,11 @@ const Navbar = ({ user }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
+
+  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
+    user.name || "User"
+  )}`;
+
   return (
     <AppBar
       sx={{
@@ -128,16 +133,10 @@ const Navbar = ({ user }) => {
                 gap: "1rem",
               }}
             >
-              <Box
-                component="img"
-                alt="profileImage"
-                src={profileImage}
-                height="40px"
-                width="40px"
-                borderRadius="50%"
-                sx={{
-                  objectFit: "cover",
-                }}
+              <Avatar
+                alt={user.name || "User"}
+                src={avatarUrl}
+                sx={{ width: 40, height: 40 }}
               />
               <Box textAlign="left">
                 <Typography
@@ -198,7 +197,7 @@ const Navbar = ({ user }) => {
                   navigate("/profile");
                 }}
               >
-                <Avatar /> My Profile
+                <Avatar src={avatarUrl} alt={user.name || "User"} /> My Profile
               </MenuItem>
 
               <Divider />
