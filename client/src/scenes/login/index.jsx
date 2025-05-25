@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -17,32 +17,32 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { login } from "../../state/userSlice";
+import { useDispatch } from "react-redux";
+import { unwrapResult } from "@reduxjs/toolkit";
+import validator from "validator";
 import logo from "../../assets/AdPilot.png";
 
 const Login = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
+  const dispatch = useDispatch();
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [emailError, setEmailError] = useState(false);
+  const [emailErrorMessage, setEmailErrorMessage] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (e) => e.preventDefault();
 
   const validateInputs = () => {
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
+    if (!validator.isEmail(email)) {
       setEmailError(true);
       setEmailErrorMessage("Please enter a valid email address.");
       isValid = false;
@@ -51,9 +51,21 @@ const Login = () => {
       setEmailErrorMessage("");
     }
 
-    if (!password.value || password.value.length < 6) {
+    if (
+      validator.isEmpty(password) ||
+      !validator.isStrongPassword(password, {
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+        returnScore: false,
+      })
+    ) {
       setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
+      setPasswordErrorMessage(
+        "Password must be at least 8 characters long and include at least 1 lowercase letter, 1 uppercase letter, and 1 number."
+      );
       isValid = false;
     } else {
       setPasswordError(false);
@@ -63,17 +75,26 @@ const Login = () => {
     return isValid;
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (validateInputs()) {
-      const data = new FormData(event.currentTarget);
-      console.log({
-        email: data.get("email"),
-        password: data.get("password"),
-      });
-      // call authentication API
-      // navigate to dashboard on success
+
+    if (!validateInputs()) return;
+
+    try {
+      const resultAction = await dispatch(login({ email, password }));
+      unwrapResult(resultAction);
+
       navigate("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error);
+      if (error.response?.status === 400 || error.response?.status === 404) {
+        setEmailError(true);
+        setPasswordError(true);
+        setEmailErrorMessage("Invalid email or password.");
+        setPasswordErrorMessage("Invalid email or password.");
+      } else {
+        alert("Server error, try again later.");
+      }
     }
   };
 
@@ -119,7 +140,6 @@ const Login = () => {
             fontSize: "25px",
             mt: 1,
             mb: 2,
-            color: theme.palette.text.primary,
           }}
         >
           Sign in
@@ -138,10 +158,7 @@ const Login = () => {
           <FormControl>
             <FormLabel
               htmlFor="email"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: "14px",
-              }}
+              sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
             >
               Email
             </FormLabel>
@@ -155,13 +172,12 @@ const Login = () => {
               variant="outlined"
               error={emailError}
               helperText={emailErrorMessage}
-              color={emailError ? "error" : "primary"}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               size="small"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
+                  "& fieldset": { borderColor: theme.palette.divider },
                   "&:hover fieldset": {
                     borderColor: theme.palette.primary.main,
                   },
@@ -173,10 +189,7 @@ const Login = () => {
           <FormControl>
             <FormLabel
               htmlFor="password"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: "14px",
-              }}
+              sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
             >
               Password
             </FormLabel>
@@ -191,13 +204,13 @@ const Login = () => {
               variant="outlined"
               error={passwordError}
               helperText={passwordErrorMessage}
-              color={passwordError ? "error" : "primary"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               size="small"
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
-                      aria-label="toggle password visibility"
                       onClick={handleClickShowPassword}
                       onMouseDown={handleMouseDownPassword}
                       edge="end"
@@ -210,9 +223,7 @@ const Login = () => {
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
+                  "& fieldset": { borderColor: theme.palette.divider },
                   "&:hover fieldset": {
                     borderColor: theme.palette.primary.main,
                   },
@@ -236,18 +247,13 @@ const Login = () => {
                   size="small"
                   sx={{
                     color: theme.palette.primary.main,
-                    "&.Mui-checked": {
-                      color: theme.palette.primary.main,
-                    },
+                    "&.Mui-checked": { color: theme.palette.primary.main },
                   }}
                 />
               }
               label={
                 <Typography
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    fontSize: "14px",
-                  }}
+                  sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
                 >
                   Remember me
                 </Typography>
@@ -255,10 +261,7 @@ const Login = () => {
             />
             <Link
               href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                // Add forgot password functionality here
-              }}
+              onClick={(e) => e.preventDefault()}
               sx={{
                 color: theme.palette.primary.main,
                 fontSize: "14px",
@@ -292,17 +295,10 @@ const Login = () => {
         </Box>
 
         <Divider
-          sx={{
-            my: 2,
-            width: "100%",
-            borderColor: theme.palette.divider,
-          }}
+          sx={{ my: 2, width: "100%", borderColor: theme.palette.divider }}
         >
           <Typography
-            sx={{
-              color: theme.palette.text.secondary,
-              fontSize: "14px",
-            }}
+            sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
           >
             or
           </Typography>
@@ -323,7 +319,7 @@ const Login = () => {
               fontSize: "14px",
             }}
           >
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               href="/signup"
               onClick={(e) => {

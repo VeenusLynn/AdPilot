@@ -1,7 +1,10 @@
 import express from "express";
-import { login } from "../controllers/login.js";
-import { register } from "../controllers/register.js";
-import { logout } from "../controllers/logout.js";
+import {
+  logout,
+  register,
+  login,
+  getCurrentUser,
+} from "../controllers/auth.js";
 import { verifyToken } from "../utils/verifyToken.js";
 
 const router = express.Router();
@@ -9,6 +12,8 @@ const router = express.Router();
 router.post("/login", login);
 router.post("/register", register);
 router.post("/logout", logout);
+
+router.get("/me", getCurrentUser);
 
 router.get("/verify", verifyToken, (req, res) => {
   res.status(202).json(req.user);

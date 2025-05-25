@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { configureStore } from "@reduxjs/toolkit";
 import globalReducer from "./state/index";
-import userReducer from "./state/userSLice";
+import userReducer from "./state/userSlice";
 import { Provider } from "react-redux";
 
 const store = configureStore({

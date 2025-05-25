@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LightModeOutlined,
   DarkModeOutlined,
   Search,
   NotificationsNoneOutlined,
-  Menu as MenuIcon,
   Settings,
   Logout,
 } from "@mui/icons-material";
-
+import { useNavigate } from "react-router-dom";
 import FlexBetween from "./FlexBetween";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMode } from "../state";
 import profileImage from "../assets/profilePic.jpg";
 import logo from "../assets/AdPilot.png";
@@ -28,14 +27,28 @@ import {
   Avatar,
   Divider,
   ListItemIcon,
+  Snackbar,
+  Alert,
 } from "@mui/material";
+import { logout } from "../state/userSlice.js";
 
 const Navbar = ({ user }) => {
   const dispatch = useDispatch();
   const theme = useTheme();
+  const navigate = useNavigate();
 
   // console.log("Current Theme:", theme);
   // console.log("Current Palette:", theme.palette);
+
+  const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
+
+  const logoutStatus = useSelector((state) => state.user.status);
+
+  useEffect(() => {
+    if (logoutStatus === "succeeded") {
+      setShowLogoutSuccess(true);
+    }
+  }, [logoutStatus]);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const isOpen = Boolean(anchorEl);
@@ -179,19 +192,36 @@ const Navbar = ({ user }) => {
               transformOrigin={{ horizontal: "right", vertical: "top" }}
               anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             >
-              <MenuItem onClick={handleClose}>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  navigate("/profile");
+                }}
+              >
                 <Avatar /> My Profile
               </MenuItem>
 
               <Divider />
 
-              <MenuItem onClick={handleClose}>
+              <MenuItem
+                onClick={() => {
+                  handleClose();
+                  navigate("/settings");
+                }}
+              >
                 <ListItemIcon>
                   <Settings fontSize="small" />
                 </ListItemIcon>
                 Settings
               </MenuItem>
-              <MenuItem onClick={handleClose}>
+              <MenuItem
+                onClick={() => {
+                  dispatch(logout());
+                  handleClose();
+                  setShowLogoutSuccess(true);
+                  setTimeout(() => navigate("/login"), 2500);
+                }}
+              >
                 <ListItemIcon>
                   <Logout fontSize="small" />
                 </ListItemIcon>
@@ -201,6 +231,20 @@ const Navbar = ({ user }) => {
           </FlexBetween>
         </FlexBetween>
       </Toolbar>
+      <Snackbar
+        open={showLogoutSuccess}
+        autoHideDuration={2000}
+        onClose={() => setShowLogoutSuccess(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setShowLogoutSuccess(false)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
+          Logged out successfully
+        </Alert>
+      </Snackbar>
     </AppBar>
   );
 };

@@ -14,6 +14,8 @@ import Campaigns from "./scenes/campaigns/index.jsx";
 import Billing from "./scenes/billing/index.jsx";
 import Settings from "./scenes/settings/index.jsx";
 import Profile from "./scenes/profile/index.jsx";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AuthProvider from "./components/AuthProvider.jsx";
 
 const App = () => {
   const mode = useSelector((state) => state.global.mode);
@@ -29,12 +31,17 @@ const App = () => {
             <Route path="/landing" element={<Landing />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
-            <Route element={<Layout />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/campaigns" element={<Campaigns />} />
-              <Route path="/billing" element={<Billing />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/profile" element={<Profile />} />
+            {/* Protected routes */}
+            <Route element={<AuthProvider />}>
+              <Route element={<ProtectedRoute />}>
+                <Route element={<Layout />}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/campaigns" element={<Campaigns />} />
+                  <Route path="/billing" element={<Billing />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
+                </Route>
+              </Route>
             </Route>
           </Routes>
         </ThemeProvider>

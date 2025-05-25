@@ -1,13 +1,11 @@
 import React from "react";
-import UserProfile from "../../components/UserProfile";
+import { useSelector } from "react-redux";
+import { Typography } from "@mui/material";
 
 const Dashboard = () => {
-  return (
-    <div>
-      Dashboard
-      <UserProfile userId="6831c420e7a76a874759dddd" />
-    </div>
-  );
+  const user = useSelector((state) => state.user);
+  console.log(user.data);
+  return <div>Dashboard</div>;
 };
 
 export default Dashboard;

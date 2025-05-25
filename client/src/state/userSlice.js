@@ -1,6 +1,17 @@
-// src/state/userSlice.js
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getUser } from "./api";
+import { getUser, loginUser, logoutUser } from "./api";
+
+export const login = createAsyncThunk(
+  "user/login",
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await loginUser(credentials);
+      return response.data.user; // assuming backend returns { user, message }
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+  }
+);
 
 export const fetchUser = createAsyncThunk(
   "user/fetchUser",
@@ -10,6 +21,18 @@ export const fetchUser = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
+    }
+  }
+);
+
+export const logout = createAsyncThunk(
+  "user/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await logoutUser();
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Logout failed");
     }
   }
 );
@@ -28,6 +51,22 @@ const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(login.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(login.fulfilled, (state, action) => {
+        state.loading = false;
+        state.data = action.payload;
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(logout.fulfilled, (state) => {
+        state.data = null;
+        state.error = null;
+      })
       .addCase(fetchUser.pending, (state) => {
         state.loading = true;
         state.error = null;

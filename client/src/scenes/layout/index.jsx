@@ -1,30 +1,38 @@
 import React, { useState, useEffect } from "react";
 import { Box, useMediaQuery } from "@mui/material";
 import { Outlet } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Navbar from "../../components/Navbar";
 import Sidebar from "../../components/Sidebar";
-import { getUser } from "../../state/api";
+import { getCurrentUser } from "../../state/api.js";
+import { fetchUser } from "../../state/userSlice.js";
 
 const Layout = () => {
   const isNonMobile = useMediaQuery("(min-width: 600px)");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-  const userId = useSelector((state) => state.global.userId);
   const [user, setUser] = useState(null);
 
+  const dispatch = useDispatch();
+  const stateUser = useSelector((state) => state.user.data);
+
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchUserData = async () => {
       try {
-        const response = await getUser(userId);
-        setUser(response.data);
-      } catch (err) {
-        console.error("Error fetching user:", err);
+        if (!stateUser) {
+          const response = await getCurrentUser(); // fetch from cookie-authenticated endpoint
+          const userFromCookie = response.data;
+          dispatch(fetchUser.fulfilled(userFromCookie)); // preload it into Redux if you want
+          setUser(userFromCookie);
+        } else {
+          setUser(stateUser);
+        }
+      } catch (error) {
+        console.error("Error loading user from cookies:", error);
       }
     };
 
-    fetchUser();
-  }, [userId]);
+    fetchUserData();
+  }, [stateUser, dispatch]);
 
   return (
     <Box width="100%" height="100%">

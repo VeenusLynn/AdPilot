@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -17,53 +17,33 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import validator from "validator";
+import { registerUser } from "../../state/api";
 import logo from "../../assets/AdPilot.png";
 
 const SignUp = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [nameError, setNameError] = React.useState(false);
-  const [nameErrorMessage, setNameErrorMessage] = React.useState("");
-  const [showPassword, setShowPassword] = React.useState(false);
 
-  const handleClickShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleMouseDownPassword = (event) => {
-    event.preventDefault();
-  };
+  const [emailError, setEmailError] = useState(false);
+  const [emailErrorMessage, setEmailErrorMessage] = useState("");
+  const [passwordError, setPasswordError] = useState(false);
+  const [passwordErrorMessage, setPasswordErrorMessage] = useState("");
+  const [nameError, setNameError] = useState(false);
+  const [nameErrorMessage, setNameErrorMessage] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (e) => e.preventDefault();
 
   const validateInputs = () => {
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-    const name = document.getElementById("name");
-
     let isValid = true;
 
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
-    }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
-
-    if (!name.value || name.value.length < 1) {
+    if (validator.isEmpty(name)) {
       setNameError(true);
       setNameErrorMessage("Name is required.");
       isValid = false;
@@ -72,21 +52,54 @@ const SignUp = () => {
       setNameErrorMessage("");
     }
 
+    if (!validator.isEmail(email)) {
+      setEmailError(true);
+      setEmailErrorMessage("Please enter a valid email address.");
+      isValid = false;
+    } else {
+      setEmailError(false);
+      setEmailErrorMessage("");
+    }
+
+    if (
+      validator.isEmpty(password) ||
+      !validator.isStrongPassword(password, {
+        minLength: 8,
+        minLowercase: 1,
+        minUppercase: 1,
+        minNumbers: 1,
+        minSymbols: 1,
+      })
+    ) {
+      setPasswordError(true);
+      setPasswordErrorMessage(
+        "Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol."
+      );
+      isValid = false;
+    } else {
+      setPasswordError(false);
+      setPasswordErrorMessage("");
+    }
+
     return isValid;
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    if (validateInputs()) {
-      const data = new FormData(event.currentTarget);
-      console.log({
-        name: data.get("name"),
-        email: data.get("email"),
-        password: data.get("password"),
-      });
-      // call authentication API
-      // navigate to dashboard on success
-      navigate("/dashboard");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateInputs()) return;
+
+    try {
+      const response = await registerUser({ name, email, password });
+      console.log("User registered:", response.data);
+      navigate("/login");
+    } catch (error) {
+      console.error("Registration failed:", error);
+      if (error.response?.data?.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Registration failed. Please try again.");
+      }
     }
   };
 
@@ -151,29 +164,24 @@ const SignUp = () => {
           <FormControl>
             <FormLabel
               htmlFor="name"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: "14px",
-              }}
+              sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
             >
               Full name
             </FormLabel>
             <TextField
-              autoComplete="name"
               name="name"
               required
               fullWidth
               id="name"
               placeholder="Jon Snow"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               error={nameError}
               helperText={nameErrorMessage}
-              color={nameError ? "error" : "primary"}
               size="small"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
+                  "& fieldset": { borderColor: theme.palette.divider },
                   "&:hover fieldset": {
                     borderColor: theme.palette.primary.main,
                   },
@@ -185,10 +193,7 @@ const SignUp = () => {
           <FormControl>
             <FormLabel
               htmlFor="email"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: "14px",
-              }}
+              sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
             >
               Email
             </FormLabel>
@@ -199,16 +204,14 @@ const SignUp = () => {
               placeholder="your@email.com"
               name="email"
               autoComplete="email"
-              variant="outlined"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               error={emailError}
               helperText={emailErrorMessage}
-              color={emailError ? "error" : "primary"}
               size="small"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
+                  "& fieldset": { borderColor: theme.palette.divider },
                   "&:hover fieldset": {
                     borderColor: theme.palette.primary.main,
                   },
@@ -220,10 +223,7 @@ const SignUp = () => {
           <FormControl>
             <FormLabel
               htmlFor="password"
-              sx={{
-                color: theme.palette.text.secondary,
-                fontSize: "14px",
-              }}
+              sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
             >
               Password
             </FormLabel>
@@ -235,10 +235,10 @@ const SignUp = () => {
               type={showPassword ? "text" : "password"}
               id="password"
               autoComplete="new-password"
-              variant="outlined"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               error={passwordError}
               helperText={passwordErrorMessage}
-              color={passwordError ? "error" : "primary"}
               size="small"
               InputProps={{
                 endAdornment: (
@@ -257,9 +257,7 @@ const SignUp = () => {
               }}
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  "& fieldset": {
-                    borderColor: theme.palette.divider,
-                  },
+                  "& fieldset": { borderColor: theme.palette.divider },
                   "&:hover fieldset": {
                     borderColor: theme.palette.primary.main,
                   },
@@ -276,18 +274,13 @@ const SignUp = () => {
                 size="small"
                 sx={{
                   color: theme.palette.primary.main,
-                  "&.Mui-checked": {
-                    color: theme.palette.primary.main,
-                  },
+                  "&.Mui-checked": { color: theme.palette.primary.main },
                 }}
               />
             }
             label={
               <Typography
-                sx={{
-                  color: theme.palette.text.secondary,
-                  fontSize: "14px",
-                }}
+                sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
               >
                 I want to receive updates via email.
               </Typography>
@@ -314,57 +307,41 @@ const SignUp = () => {
         </Box>
 
         <Divider
-          sx={{
-            my: 2,
-            width: "100%",
-            borderColor: theme.palette.divider,
-          }}
+          sx={{ my: 2, width: "100%", borderColor: theme.palette.divider }}
         >
           <Typography
-            sx={{
-              color: theme.palette.text.secondary,
-              fontSize: "14px",
-            }}
+            sx={{ color: theme.palette.text.secondary, fontSize: "14px" }}
           >
             or
           </Typography>
         </Divider>
 
-        <Box
+        <Typography
           sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 1.5,
-            width: "100%",
+            textAlign: "center",
+            color: theme.palette.text.secondary,
+            fontSize: "14px",
           }}
         >
-          <Typography
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate("/login");
+            }}
             sx={{
-              textAlign: "center",
-              color: theme.palette.text.secondary,
+              color: theme.palette.primary.main,
               fontSize: "14px",
+              "&:hover": {
+                color: theme.palette.action.hoverButton,
+                cursor: "pointer",
+              },
             }}
           >
-            Already have an account?{" "}
-            <Link
-              href="/login"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate("/login");
-              }}
-              sx={{
-                color: theme.palette.primary.main,
-                fontSize: "14px",
-                "&:hover": {
-                  color: theme.palette.action.hoverButton,
-                  cursor: "pointer",
-                },
-              }}
-            >
-              Sign in
-            </Link>
-          </Typography>
-        </Box>
+            Sign in
+          </Link>
+        </Typography>
       </Box>
     </Stack>
   );
