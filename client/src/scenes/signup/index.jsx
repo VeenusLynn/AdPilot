@@ -19,13 +19,15 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/AdPilot.png";
 
-const Login = () => {
+const SignUp = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [emailError, setEmailError] = React.useState(false);
   const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
   const [passwordError, setPasswordError] = React.useState(false);
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
+  const [nameError, setNameError] = React.useState(false);
+  const [nameErrorMessage, setNameErrorMessage] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
 
   const handleClickShowPassword = () => {
@@ -39,6 +41,7 @@ const Login = () => {
   const validateInputs = () => {
     const email = document.getElementById("email");
     const password = document.getElementById("password");
+    const name = document.getElementById("name");
 
     let isValid = true;
 
@@ -60,6 +63,15 @@ const Login = () => {
       setPasswordErrorMessage("");
     }
 
+    if (!name.value || name.value.length < 1) {
+      setNameError(true);
+      setNameErrorMessage("Name is required.");
+      isValid = false;
+    } else {
+      setNameError(false);
+      setNameErrorMessage("");
+    }
+
     return isValid;
   };
 
@@ -68,6 +80,7 @@ const Login = () => {
     if (validateInputs()) {
       const data = new FormData(event.currentTarget);
       console.log({
+        name: data.get("name"),
         email: data.get("email"),
         password: data.get("password"),
       });
@@ -122,7 +135,7 @@ const Login = () => {
             color: theme.palette.text.primary,
           }}
         >
-          Sign in
+          Sign up
         </Typography>
 
         <Box
@@ -135,6 +148,40 @@ const Login = () => {
             width: "100%",
           }}
         >
+          <FormControl>
+            <FormLabel
+              htmlFor="name"
+              sx={{
+                color: theme.palette.text.secondary,
+                fontSize: "14px",
+              }}
+            >
+              Full name
+            </FormLabel>
+            <TextField
+              autoComplete="name"
+              name="name"
+              required
+              fullWidth
+              id="name"
+              placeholder="Jon Snow"
+              error={nameError}
+              helperText={nameErrorMessage}
+              color={nameError ? "error" : "primary"}
+              size="small"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: theme.palette.divider,
+                  },
+                  "&:hover fieldset": {
+                    borderColor: theme.palette.primary.main,
+                  },
+                },
+              }}
+            />
+          </FormControl>
+
           <FormControl>
             <FormLabel
               htmlFor="email"
@@ -187,7 +234,7 @@ const Login = () => {
               placeholder="••••••"
               type={showPassword ? "text" : "password"}
               id="password"
-              autoComplete="current-password"
+              autoComplete="new-password"
               variant="outlined"
               error={passwordError}
               helperText={passwordErrorMessage}
@@ -221,56 +268,31 @@ const Login = () => {
             />
           </FormControl>
 
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <FormControlLabel
-              control={
-                <Checkbox
-                  value="remember"
-                  color="primary"
-                  size="small"
-                  sx={{
+          <FormControlLabel
+            control={
+              <Checkbox
+                value="allowExtraEmails"
+                color="primary"
+                size="small"
+                sx={{
+                  color: theme.palette.primary.main,
+                  "&.Mui-checked": {
                     color: theme.palette.primary.main,
-                    "&.Mui-checked": {
-                      color: theme.palette.primary.main,
-                    },
-                  }}
-                />
-              }
-              label={
-                <Typography
-                  sx={{
-                    color: theme.palette.text.secondary,
-                    fontSize: "14px",
-                  }}
-                >
-                  Remember me
-                </Typography>
-              }
-            />
-            <Link
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                // Add forgot password functionality here
-              }}
-              sx={{
-                color: theme.palette.primary.main,
-                fontSize: "14px",
-                "&:hover": {
-                  color: theme.palette.action.hoverButton,
-                  cursor: "pointer",
-                },
-              }}
-            >
-              Forgot password?
-            </Link>
-          </Box>
+                  },
+                }}
+              />
+            }
+            label={
+              <Typography
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: "14px",
+                }}
+              >
+                I want to receive updates via email.
+              </Typography>
+            }
+          />
 
           <Button
             type="submit"
@@ -287,7 +309,7 @@ const Login = () => {
               },
             }}
           >
-            Sign in
+            Sign up
           </Button>
         </Box>
 
@@ -323,12 +345,12 @@ const Login = () => {
               fontSize: "14px",
             }}
           >
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              href="/signup"
+              href="/login"
               onClick={(e) => {
                 e.preventDefault();
-                navigate("/signup");
+                navigate("/login");
               }}
               sx={{
                 color: theme.palette.primary.main,
@@ -339,7 +361,7 @@ const Login = () => {
                 },
               }}
             >
-              Sign up
+              Sign in
             </Link>
           </Typography>
         </Box>
@@ -348,4 +370,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default SignUp;

@@ -50,7 +50,7 @@ const navItems = [
     icon: <IoSettingsOutline />,
   },
   {
-    text: "My Profile",
+    text: "Profile",
     icon: <AccountCircleOutlined />,
   },
 ];
