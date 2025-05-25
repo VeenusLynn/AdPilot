@@ -133,6 +133,9 @@ const Sidebar = ({
                           textTransform: "uppercase",
                           letterSpacing: "0.03em",
                           color: theme.palette.text.secondary,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
                         }}
                       >
                         {text}
@@ -169,7 +172,7 @@ const Sidebar = ({
                                 ? theme.palette.common.gray
                                 : theme.palette.text.secondary,
                           },
-                          transition: "all 0.1s ease",
+                          transition: "all 0.3s ease",
                         }}
                       >
                         <ListItemIcon
@@ -192,6 +195,9 @@ const Sidebar = ({
                             fontWeight: 600,
                             fontSize: "15px",
                             letterSpacing: "0.03rem",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
                           }}
                         />
                       </ListItemButton>
@@ -208,8 +214,9 @@ const Sidebar = ({
                     <Divider
                       key={text}
                       sx={{
-                        my: 1,
+                        my: 1.5,
                         mx: 2,
+
                         borderColor: theme.palette.divider,
                       }}
                     />

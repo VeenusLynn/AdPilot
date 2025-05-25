@@ -132,13 +132,13 @@ const Navbar = ({ user }) => {
                   fontSize="0.85rem"
                   sx={{ color: theme.palette.text.primary }}
                 >
-                  {user.name}
+                  {user.name ? user.name : "Name"}
                 </Typography>
                 <Typography
                   fontSize="0.75rem"
                   sx={{ color: theme.palette.text.secondary }}
                 >
-                  {user.email}
+                  {user.email ? user.email : "Email"}
                 </Typography>
               </Box>
             </Button>
