@@ -9,3 +9,7 @@ export const getUser = async (req, res) => {
     res.status(404).json({ message: error.message });
   }
 };
+
+export const landing = async (req, res) => {
+  res.status(200).json({ message: "You have landed safely :P" });
+};

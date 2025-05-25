@@ -26,13 +26,21 @@ export const login = async (req, res) => {
       });
     }
     // expiry should be 2 hours, but for the sakes of testing it will temporarily be 5 days
-    const accessToken = jwt.sign({ email: user.email }, ACCESS_TOKEN_SECRET, {
-      expiresIn: "2h",
-    });
+    const accessToken = jwt.sign(
+      { email: user.email, userId: user._id },
+      ACCESS_TOKEN_SECRET,
+      {
+        expiresIn: "2h",
+      }
+    );
 
-    const refreshToken = jwt.sign({ email: user.email }, REFRESH_TOKEN_SECRET, {
-      expiresIn: "7d",
-    });
+    const refreshToken = jwt.sign(
+      { email: user.email, userId: user._id },
+      REFRESH_TOKEN_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,

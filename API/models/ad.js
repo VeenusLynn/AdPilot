@@ -8,36 +8,36 @@ const AdSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Ad name cannot exceed 100 characters"],
     },
-    imageUrl: {
-      type: String,
-      required: [true, "Image URL is required"],
-      validate: {
-        validator: function (v) {
-          try {
-            new URL(v);
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        message: (props) => `${props.value} is not a valid URL!`,
-      },
-    },
-    linkUrl: {
-      type: String,
-      required: [true, "Destination URL is required"],
-      validate: {
-        validator: function (v) {
-          try {
-            new URL(v);
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        message: (props) => `${props.value} is not a valid URL!`,
-      },
-    },
+    // imageUrl: {
+    //   type: String,
+    //   required: [true, "Image URL is required"],
+    //   validate: {
+    //     validator: function (v) {
+    //       try {
+    //         new URL(v);
+    //         return true;
+    //       } catch {
+    //         return false;
+    //       }
+    //     },
+    //     message: (props) => `${props.value} is not a valid URL!`,
+    //   },
+    // },
+    // linkUrl: {
+    //   type: String,
+    //   required: [true, "Destination URL is required"],
+    //   validate: {
+    //     validator: function (v) {
+    //       try {
+    //         new URL(v);
+    //         return true;
+    //       } catch {
+    //         return false;
+    //       }
+    //     },
+    //     message: (props) => `${props.value} is not a valid URL!`,
+    //   },
+    // },
     size: {
       width: {
         type: Number,
@@ -91,7 +91,6 @@ AdSchema.virtual("dimensions").get(function () {
   return `${this.size.width}x${this.size.height}`;
 });
 
-// validate creator exists
 AdSchema.pre("save", async function (next) {
   try {
     const user = await mongoose.model("User").findById(this.createdBy);
