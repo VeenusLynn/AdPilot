@@ -5,12 +5,14 @@ import App from "./App.jsx";
 import { configureStore } from "@reduxjs/toolkit";
 import globalReducer from "./state/index";
 import userReducer from "./state/userSlice";
+import adsReducer from "./state/adSlice";
 import { Provider } from "react-redux";
 
 const store = configureStore({
   reducer: {
     global: globalReducer,
     user: userReducer,
+    ads: adsReducer,
   },
 });
 

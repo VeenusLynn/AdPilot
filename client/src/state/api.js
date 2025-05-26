@@ -25,3 +25,15 @@ export const registerUser = (userData) =>
 export const loginUser = (credentials) =>
   api.post("/api/auth/login", credentials);
 export const logoutUser = () => api.post("/api/auth/logout");
+
+export const getAds = () => api.get("/api/ads");
+export const createAd = (adData) => api.post("/api/ads", adData);
+export const updateAd = (id, adData) => api.put(`/api/ads/${id}`, adData);
+export const deleteAd = (id) => api.delete(`/api/ads/${id}`);
+
+export const uploadImage = (formData) =>
+  api.post("/api/ads/uploads", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });

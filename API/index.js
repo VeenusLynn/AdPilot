@@ -10,6 +10,8 @@ import morgan from "morgan";
 import authRoutes from "./routes/auth.js";
 import adsRoutes from "./routes/ads.js";
 import generalRoutes from "./routes/general.js";
+import sdkRoutes from "./routes/sdk.js";
+import statsRoutes from "./routes/stats.js";
 
 dotenv.config();
 const app = express();
@@ -31,6 +33,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/general", generalRoutes);
+app.use("/api/sdk", sdkRoutes);
+app.use("/api/stats", statsRoutes);
 
 const PORT = process.env.PORT || 9000;
 const MONGO_URL = process.env.MONGO_URL;

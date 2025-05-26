@@ -1,4 +1,6 @@
 import Ad from "../models/ad.js";
+import path from "path";
+import fs from "fs";
 
 export const createAd = async (req, res) => {
   try {
@@ -52,7 +54,6 @@ export const createAd = async (req, res) => {
 
 export const getAds = async (req, res) => {
   try {
-    // Optional filters from query string
     const { active, zipCode, createdBy } = req.query;
 
     const filter = {};
@@ -211,4 +212,21 @@ export const deleteAdById = async (req, res) => {
       error: error.message,
     });
   }
+};
+
+export const uploadImage = (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: "No file uploaded",
+    });
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+
+  res.status(200).json({
+    success: true,
+    message: "Image uploaded successfully",
+    imageUrl,
+  });
 };

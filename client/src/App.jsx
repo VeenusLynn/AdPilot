@@ -16,6 +16,7 @@ import Settings from "./scenes/settings/index.jsx";
 import Profile from "./scenes/profile/index.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import AuthProvider from "./components/AuthProvider.jsx";
+import NotificationProvider from "./components/NotificationProvider.jsx";
 
 const App = () => {
   const mode = useSelector((state) => state.global.mode);
@@ -26,24 +27,26 @@ const App = () => {
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Routes>
-            <Route path="/" element={<Navigate to="/landing" replace />} />
-            <Route path="/landing" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            {/* Protected routes */}
-            <Route element={<AuthProvider />}>
-              <Route element={<ProtectedRoute />}>
-                <Route element={<Layout />}>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/campaigns" element={<Campaigns />} />
-                  <Route path="/billing" element={<Billing />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/profile" element={<Profile />} />
+          <NotificationProvider>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/landing" element={<Landing />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              {/* Protected routes */}
+              <Route element={<AuthProvider />}>
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<Layout />}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/campaigns" element={<Campaigns />} />
+                    <Route path="/billing" element={<Billing />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/profile" element={<Profile />} />
+                  </Route>
                 </Route>
               </Route>
-            </Route>
-          </Routes>
+            </Routes>
+          </NotificationProvider>
         </ThemeProvider>
       </BrowserRouter>
     </div>

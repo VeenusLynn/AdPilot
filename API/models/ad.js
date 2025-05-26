@@ -8,36 +8,14 @@ const AdSchema = new mongoose.Schema(
       trim: true,
       maxlength: [100, "Ad name cannot exceed 100 characters"],
     },
-    // imageUrl: {
-    //   type: String,
-    //   required: [true, "Image URL is required"],
-    //   validate: {
-    //     validator: function (v) {
-    //       try {
-    //         new URL(v);
-    //         return true;
-    //       } catch {
-    //         return false;
-    //       }
-    //     },
-    //     message: (props) => `${props.value} is not a valid URL!`,
-    //   },
-    // },
-    // linkUrl: {
-    //   type: String,
-    //   required: [true, "Destination URL is required"],
-    //   validate: {
-    //     validator: function (v) {
-    //       try {
-    //         new URL(v);
-    //         return true;
-    //       } catch {
-    //         return false;
-    //       }
-    //     },
-    //     message: (props) => `${props.value} is not a valid URL!`,
-    //   },
-    // },
+    imageUrl: {
+      type: String,
+      required: [true, "Image URL is required"],
+    },
+    linkUrl: {
+      type: String,
+      required: [true, "Destination URL is required"],
+    },
     size: {
       width: {
         type: Number,
