@@ -64,6 +64,13 @@ const AdSchema = new mongoose.Schema(
     active: {
       type: Boolean,
       default: false,
+      validate: {
+        validator: function (value) {
+          return typeof value === "boolean";
+        },
+        message: (props) =>
+          `"${props.value}" is not a valid boolean (true/false)!`,
+      },
     },
     createdAt: {
       type: Date,
