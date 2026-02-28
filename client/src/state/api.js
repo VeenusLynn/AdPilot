@@ -13,7 +13,7 @@ api.interceptors.response.use(
   (error) => {
     console.error("API Error:", error);
     return Promise.reject(error);
-  }
+  },
 );
 
 export const getUser = (Id) => api.get(`/general/user/${Id}`);
@@ -33,7 +33,15 @@ export const deleteAd = (id) => api.delete(`/api/ads/${id}`);
 
 export const uploadImage = (formData) =>
   api.post("/api/ads/uploads", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers: { "Content-Type": "multipart/form-data" },
   });
+
+// Profile
+export const updateUserProfile = (data) => api.patch("/api/auth/profile", data);
+export const uploadProfileImage = (formData) =>
+  api.post("/api/auth/profile/image", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
+export const changeUserPassword = (data) =>
+  api.post("/api/auth/change-password", data);

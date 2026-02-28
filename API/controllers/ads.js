@@ -115,7 +115,6 @@ export const getAdById = async (req, res) => {
 export const updateAdById = async (req, res) => {
   try {
     const adId = req.params.id;
-    const userId = req.user.userId;
     const updateData = req.body;
 
     const ad = await Ad.findById(adId);
@@ -123,13 +122,6 @@ export const updateAdById = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Ad not found",
-      });
-    }
-
-    if (ad.createdBy.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized to update this ad",
       });
     }
 
@@ -182,20 +174,12 @@ export const updateAdById = async (req, res) => {
 export const deleteAdById = async (req, res) => {
   try {
     const adId = req.params.id;
-    const userId = req.user.userId;
 
     const ad = await Ad.findById(adId);
     if (!ad) {
       return res.status(404).json({
         success: false,
         message: "Ad not found",
-      });
-    }
-
-    if (ad.createdBy.toString() !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Unauthorized to delete this ad",
       });
     }
 

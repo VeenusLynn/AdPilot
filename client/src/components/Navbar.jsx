@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   LightModeOutlined,
   DarkModeOutlined,
@@ -9,9 +9,9 @@ import {
 } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import FlexBetween from "./FlexBetween";
+import UserAvatar from "./UserAvatar";
 import { useDispatch, useSelector } from "react-redux";
 import { setMode } from "../state";
-
 import logo from "../assets/AdPilot.png";
 import {
   AppBar,
@@ -24,7 +24,6 @@ import {
   Menu,
   MenuItem,
   Button,
-  Avatar,
   Divider,
   ListItemIcon,
   Snackbar,
@@ -32,36 +31,20 @@ import {
 } from "@mui/material";
 import { logout } from "../state/userSlice.js";
 
-const Navbar = ({ user }) => {
+const Navbar = () => {
   const dispatch = useDispatch();
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // console.log("Current Theme:", theme);
-  // console.log("Current Palette:", theme.palette);
+  // Read directly from Redux — re-renders whenever profileImage updates
+  const user = useSelector((state) => state.user.data);
 
   const [showLogoutSuccess, setShowLogoutSuccess] = useState(false);
-
-  const logoutStatus = useSelector((state) => state.user.status);
-
-  useEffect(() => {
-    if (logoutStatus === "succeeded") {
-      setShowLogoutSuccess(true);
-    }
-  }, [logoutStatus]);
-
   const [anchorEl, setAnchorEl] = useState(null);
   const isOpen = Boolean(anchorEl);
-  const handleClick = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
 
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-    user.name || "User"
-  )}`;
+  const handleClick = (event) => setAnchorEl(event.currentTarget);
+  const handleClose = () => setAnchorEl(null);
 
   return (
     <AppBar
@@ -75,12 +58,8 @@ const Navbar = ({ user }) => {
         width: "100%",
       }}
     >
-      <Toolbar
-        sx={{
-          justifyContent: "space-between",
-        }}
-      >
-        {/* left side */}
+      <Toolbar sx={{ justifyContent: "space-between" }}>
+        {/* Left side */}
         <FlexBetween>
           <Box display="flex" alignItems="center" gap="0.5rem" mr="1rem">
             <Box
@@ -97,7 +76,7 @@ const Navbar = ({ user }) => {
             backgroundColor={theme.palette.divider}
             borderRadius="8px"
             gap="3rem"
-            p="0.2 rem 1.5 rem"
+            p="0.2rem 1.5rem"
           >
             <InputBase
               placeholder="Search..."
@@ -109,7 +88,7 @@ const Navbar = ({ user }) => {
           </FlexBetween>
         </FlexBetween>
 
-        {/* right side */}
+        {/* Right side */}
         <FlexBetween gap="1.5rem">
           <IconButton onClick={() => dispatch(setMode())}>
             {theme.palette.mode === "dark" ? (
@@ -121,7 +100,8 @@ const Navbar = ({ user }) => {
           <IconButton>
             <NotificationsNoneOutlined sx={{ fontSize: "25px" }} />
           </IconButton>
-          {/* User Profile section*/}
+
+          {/* User profile button */}
           <FlexBetween>
             <Button
               onClick={handleClick}
@@ -133,27 +113,24 @@ const Navbar = ({ user }) => {
                 gap: "1rem",
               }}
             >
-              <Avatar
-                alt={user.name || "User"}
-                src={avatarUrl}
-                sx={{ width: 40, height: 40 }}
-              />
+              <UserAvatar size={40} />
               <Box textAlign="left">
                 <Typography
                   fontWeight="bold"
                   fontSize="0.85rem"
                   sx={{ color: theme.palette.text.primary }}
                 >
-                  {user.name ? user.name : "Name"}
+                  {user?.name || "Name"}
                 </Typography>
                 <Typography
                   fontSize="0.75rem"
                   sx={{ color: theme.palette.text.secondary }}
                 >
-                  {user.email ? user.email : "Email"}
+                  {user?.email || "Email"}
                 </Typography>
               </Box>
             </Button>
+
             <Menu
               anchorEl={anchorEl}
               id="account-menu"
@@ -196,8 +173,10 @@ const Navbar = ({ user }) => {
                   handleClose();
                   navigate("/profile");
                 }}
+                sx={{ gap: 1 }}
               >
-                <Avatar src={avatarUrl} alt={user.name || "User"} /> My Profile
+                <UserAvatar size={32} />
+                My Profile
               </MenuItem>
 
               <Divider />
@@ -213,6 +192,7 @@ const Navbar = ({ user }) => {
                 </ListItemIcon>
                 Settings
               </MenuItem>
+
               <MenuItem
                 onClick={() => {
                   dispatch(logout());
@@ -230,6 +210,7 @@ const Navbar = ({ user }) => {
           </FlexBetween>
         </FlexBetween>
       </Toolbar>
+
       <Snackbar
         open={showLogoutSuccess}
         autoHideDuration={2000}

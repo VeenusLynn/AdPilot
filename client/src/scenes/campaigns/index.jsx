@@ -31,6 +31,7 @@ import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined
 import { CiMenuKebab } from "react-icons/ci";
 import AdForm from "../../components/AdForm";
 import { useSnackbar } from "notistack";
+import useRole from "../../hooks/useRole";
 
 const StatusLabel = ({ active }) => {
   const theme = useTheme();
@@ -110,6 +111,7 @@ const Campaigns = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
   const { enqueueSnackbar } = useSnackbar();
+  const { isAdmin } = useRole();
 
   const { data: ads, loading } = useSelector((state) => state.ads);
 
@@ -133,7 +135,7 @@ const Campaigns = () => {
     setSortConfig((prev) =>
       prev.key === key
         ? { key, direction: prev.direction === "asc" ? "desc" : "asc" }
-        : { key, direction: "asc" }
+        : { key, direction: "asc" },
     );
   };
 
@@ -169,7 +171,7 @@ const Campaigns = () => {
     try {
       if (formInitialData) {
         await dispatch(
-          editAd({ id: formInitialData._id, adData: formData })
+          editAd({ id: formInitialData._id, adData: formData }),
         ).unwrap();
         enqueueSnackbar("Campaign updated successfully", {
           variant: "success",
@@ -192,7 +194,7 @@ const Campaigns = () => {
   const filteredAds = ads
     .filter((ad) => ad.name.toLowerCase().includes(search.toLowerCase()))
     .filter((ad) =>
-      statusFilter === "" ? true : String(ad.active) === statusFilter
+      statusFilter === "" ? true : String(ad.active) === statusFilter,
     );
 
   const sortedAds = [...filteredAds].sort((a, b) => {
@@ -226,7 +228,7 @@ const Campaigns = () => {
 
   return (
     <Box p={4}>
-      <Typography variant="h3" marginBottom="1.5rem">
+      <Typography variant="h3" fontWeight={800} mb={2}>
         Manage All Your Campaigns
       </Typography>
 
@@ -271,23 +273,25 @@ const Campaigns = () => {
             <MenuItem value="false">Inactive</MenuItem>
           </TextField>
 
-          <Button
-            variant="contained"
-            sx={{
-              borderRadius: "15px",
-              fontWeight: 500,
-              fontSize: "14px",
-              color: theme.palette.common.white,
-              backgroundColor: theme.palette.primary.main,
-              textTransform: "none",
-              "&:hover": {
-                backgroundColor: theme.palette.primary.dark,
-              },
-            }}
-            onClick={openCreateForm}
-          >
-            + Add Campaign
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="contained"
+              sx={{
+                borderRadius: "15px",
+                fontWeight: 500,
+                fontSize: "14px",
+                color: theme.palette.common.white,
+                backgroundColor: theme.palette.primary.main,
+                textTransform: "none",
+                "&:hover": {
+                  backgroundColor: theme.palette.primary.dark,
+                },
+              }}
+              onClick={openCreateForm}
+            >
+              + Add Campaign
+            </Button>
+          )}
         </Box>
       </Box>
 
@@ -350,15 +354,17 @@ const Campaigns = () => {
                     }}
                   >
                     <TableCell>
-                      <Box
-                        sx={{ cursor: "pointer" }}
-                        onClick={(e) => handleMenuOpen(e, ad._id)}
-                      >
-                        <CiMenuKebab
-                          size={20}
-                          color={theme.palette.common.gray}
-                        />
-                      </Box>
+                      {isAdmin && (
+                        <Box
+                          sx={{ cursor: "pointer" }}
+                          onClick={(e) => handleMenuOpen(e, ad._id)}
+                        >
+                          <CiMenuKebab
+                            size={20}
+                            color={theme.palette.common.gray}
+                          />
+                        </Box>
+                      )}
                     </TableCell>
                     <TableCell>{ad.name}</TableCell>
                     <TableCell>

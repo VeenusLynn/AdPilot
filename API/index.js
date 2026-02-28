@@ -6,12 +6,12 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 import morgan from "morgan";
+import path from "path";
+import { fileURLToPath } from "url";
 
 import authRoutes from "./routes/auth.js";
 import adsRoutes from "./routes/ads.js";
 import generalRoutes from "./routes/general.js";
-import sdkRoutes from "./routes/sdk.js";
-import statsRoutes from "./routes/stats.js";
 
 dotenv.config();
 const app = express();
@@ -19,7 +19,7 @@ app.use(
   cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(helmet());
@@ -29,12 +29,15 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Serve uploaded files (ad images + profile avatars)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/general", generalRoutes);
-app.use("/api/sdk", sdkRoutes);
-app.use("/api/stats", statsRoutes);
 
 const PORT = process.env.PORT || 9000;
 const MONGO_URL = process.env.MONGO_URL;
