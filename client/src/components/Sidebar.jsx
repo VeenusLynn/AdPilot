@@ -126,32 +126,41 @@ const Sidebar = ({
             {navItems.map(({ text, icon, path: itemPath }) => {
               // ── Section heading (no icon) ───────────────────────────────
               if (!icon) {
-                return showText ? (
-                  <Typography
+                return (
+                  <Box
                     key={text}
                     sx={{
-                      m: "0.25rem 0 0.75rem 1.5rem",
-                      fontWeight: 700,
-                      fontSize: "11px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.07em",
-                      color: theme.palette.text.secondary,
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      height: 40,
+                      display: "flex",
+                      alignItems: "center",
+                      px: "1.5rem",
                     }}
                   >
-                    {text}
-                  </Typography>
-                ) : (
-                  <Divider
-                    key={text}
-                    sx={{
-                      my: 1.5,
-                      mx: 1.5,
-                      borderColor: theme.palette.divider,
-                    }}
-                  />
+                    {showText ? (
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: "11px",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.07em",
+                          color: theme.palette.text.secondary,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          width: "100%",
+                        }}
+                      >
+                        {text}
+                      </Typography>
+                    ) : (
+                      <Divider
+                        sx={{
+                          width: "100%",
+                          borderColor: theme.palette.divider,
+                        }}
+                      />
+                    )}
+                  </Box>
                 );
               }
 
