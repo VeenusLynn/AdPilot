@@ -12,6 +12,7 @@ import { fileURLToPath } from "url";
 import authRoutes from "./routes/auth.js";
 import adsRoutes from "./routes/ads.js";
 import generalRoutes from "./routes/general.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 const app = express();
@@ -38,6 +39,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/ads", adsRoutes);
 app.use("/general", generalRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 9000;
 const MONGO_URL = process.env.MONGO_URL;

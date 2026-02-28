@@ -45,3 +45,8 @@ export const uploadProfileImage = (formData) =>
 
 export const changeUserPassword = (data) =>
   api.post("/api/auth/change-password", data);
+
+// Admin
+export const getAdminUsers = () => api.get("/api/admin/users");
+export const updateAdminUser = (id, data) =>
+  api.put(`/api/admin/users/${id}`, data);

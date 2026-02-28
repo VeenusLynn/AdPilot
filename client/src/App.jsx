@@ -14,7 +14,9 @@ import Campaigns from "./scenes/campaigns/index.jsx";
 import Billing from "./scenes/billing/index.jsx";
 import Settings from "./scenes/settings/index.jsx";
 import Profile from "./scenes/profile/index.jsx";
+import ManageUsers from "./scenes/manageUsers/index.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
 import AuthProvider from "./components/AuthProvider.jsx";
 import NotificationProvider from "./components/NotificationProvider.jsx";
 
@@ -42,6 +44,14 @@ const App = () => {
                     <Route path="/billing" element={<Billing />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route
+                      path="/manage-users"
+                      element={
+                        <AdminRoute>
+                          <ManageUsers />
+                        </AdminRoute>
+                      }
+                    />
                   </Route>
                 </Route>
               </Route>

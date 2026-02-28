@@ -7,8 +7,9 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
   ListItemIcon,
+  ListItemText,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -16,6 +17,7 @@ import {
   ChevronLeft,
   ChevronRightOutlined,
   AccountCircleOutlined,
+  SupervisorAccountOutlined,
 } from "@mui/icons-material";
 import { LuLayoutDashboard } from "react-icons/lu";
 import { IoSettingsOutline } from "react-icons/io5";
@@ -23,37 +25,30 @@ import { RiMegaphoneLine } from "react-icons/ri";
 import { LiaFileInvoiceDollarSolid } from "react-icons/lia";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 
-const navItems = [
+// ── Nav definitions ────────────────────────────────────────────────────────
+
+const baseNavItems = [
+  { text: "Main Menu", icon: null },
+  { text: "Dashboard", icon: <LuLayoutDashboard /> },
+  { text: "Campaigns", icon: <RiMegaphoneLine /> },
+  { text: "Billing", icon: <LiaFileInvoiceDollarSolid /> },
+  { text: "Manage My Account", icon: null },
+  { text: "Settings", icon: <IoSettingsOutline /> },
+  { text: "Profile", icon: <AccountCircleOutlined /> },
+];
+
+const adminNavItems = [
+  { text: "Admin", icon: null },
   {
-    text: "Main Menu",
-    icon: null,
-  },
-  {
-    text: "Dashboard",
-    icon: <LuLayoutDashboard />,
-  },
-  {
-    text: "Campaigns",
-    icon: <RiMegaphoneLine />,
-  },
-  {
-    text: "Billing",
-    icon: <LiaFileInvoiceDollarSolid />,
-  },
-  {
-    text: "Manage My Account",
-    icon: null,
-  },
-  {
-    text: "Settings",
-    icon: <IoSettingsOutline />,
-  },
-  {
-    text: "Profile",
-    icon: <AccountCircleOutlined />,
+    text: "Manage Users",
+    icon: <SupervisorAccountOutlined />,
+    path: "/manage-users",
   },
 ];
+
+// ── Sidebar ────────────────────────────────────────────────────────────────
 
 const Sidebar = ({
   drawerWidth,
@@ -65,15 +60,24 @@ const Sidebar = ({
   const [active, setActive] = useState("");
   const navigate = useNavigate();
   const theme = useTheme();
+  const user = useSelector((state) => state.user.data);
+
+  const navItems = [
+    ...(user?.role === "admin" ? adminNavItems : []),
+    ...baseNavItems,
+  ];
 
   useEffect(() => {
     setActive(pathname.substring(1));
   }, [pathname]);
 
+  // Single flag that drives all conditional rendering
+  const showText = isSidebarOpen;
+
   return (
     <Box component="nav">
       <Drawer
-        open={true}
+        open
         variant={isNonMobile ? "permanent" : "temporary"}
         anchor="left"
         sx={{
@@ -96,186 +100,138 @@ const Sidebar = ({
         }}
       >
         <Box width="100%" height="100%">
+          {/* Collapse toggle */}
           <Box
-            m="0 1rem"
             display="flex"
-            justifyContent={isSidebarOpen ? "flex-end" : "center"}
+            justifyContent={showText ? "flex-end" : "center"}
             sx={{
-              paddingTop: isNonMobile ? "0" : "0.5rem",
-              paddingBottom: isNonMobile ? "0" : "0.5rem",
+              m: "0 1rem",
+              pt: isNonMobile ? 0 : "0.5rem",
+              pb: isNonMobile ? 0 : "0.5rem",
             }}
           >
             <IconButton
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               sx={{
                 color: theme.palette.text.secondary,
-                "&:hover": {
-                  backgroundColor: theme.palette.action.hover,
-                },
+                "&:hover": { backgroundColor: theme.palette.action.hover },
               }}
             >
-              {isSidebarOpen ? <ChevronLeft /> : <ChevronRightOutlined />}
+              {showText ? <ChevronLeft /> : <ChevronRightOutlined />}
             </IconButton>
           </Box>
 
-          {isSidebarOpen ? (
-            <>
-              <List>
-                {navItems.map(({ text, icon }) => {
-                  if (!icon) {
-                    return (
-                      <Typography
-                        key={text}
-                        sx={{
-                          m: "0.25rem 0 0.75rem 1.5rem",
-                          fontWeight: 700,
-                          fontSize: "14px",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.03em",
-                          color: theme.palette.text.secondary,
+          {/* Unified nav list — one branch, driven by showText */}
+          <List sx={{ px: 0 }}>
+            {navItems.map(({ text, icon, path: itemPath }) => {
+              // ── Section heading (no icon) ───────────────────────────────
+              if (!icon) {
+                return showText ? (
+                  <Typography
+                    key={text}
+                    sx={{
+                      m: "0.25rem 0 0.75rem 1.5rem",
+                      fontWeight: 700,
+                      fontSize: "11px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em",
+                      color: theme.palette.text.secondary,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {text}
+                  </Typography>
+                ) : (
+                  <Divider
+                    key={text}
+                    sx={{
+                      my: 1.5,
+                      mx: 1.5,
+                      borderColor: theme.palette.divider,
+                    }}
+                  />
+                );
+              }
+
+              // ── Nav item (has icon) ──────────────────────────────────────
+              const navPath = itemPath || `/${text.toLowerCase()}`;
+              const activeKey = navPath.replace(/^\//, "");
+              const isActive = active === activeKey;
+
+              const button = (
+                <ListItem key={text} disablePadding>
+                  <ListItemButton
+                    onClick={() => {
+                      navigate(navPath);
+                      setActive(activeKey);
+                    }}
+                    sx={{
+                      mx: "8px",
+                      my: showText ? "4px" : "6px",
+                      borderRadius: "12px",
+                      justifyContent: showText ? "flex-start" : "center",
+                      minHeight: 44,
+                      backgroundColor: isActive
+                        ? theme.palette.primary.main
+                        : "transparent",
+                      color: isActive
+                        ? theme.palette.common.white
+                        : theme.palette.text.secondary,
+                      "&:hover": {
+                        backgroundColor: isActive
+                          ? theme.palette.action.hoverButton
+                          : theme.palette.action.hover,
+                        color: isActive
+                          ? theme.palette.common.gray
+                          : theme.palette.text.secondary,
+                      },
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    <ListItemIcon
+                      sx={{
+                        minWidth: showText ? "36px" : "auto",
+                        ml: showText ? "0.5rem" : 0,
+                        mr: 0,
+                        fontSize: "20px",
+                        justifyContent: "center",
+                        color: isActive
+                          ? theme.palette.common.white
+                          : theme.palette.text.secondary,
+                      }}
+                    >
+                      {icon}
+                    </ListItemIcon>
+
+                    {showText && (
+                      <ListItemText
+                        primary={text}
+                        primaryTypographyProps={{
+                          fontWeight: 600,
+                          fontSize: "15px",
+                          letterSpacing: "0.03rem",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                         }}
-                      >
-                        {text}
-                      </Typography>
-                    );
-                  }
-                  const lcText = text.toLowerCase();
-                  return (
-                    <ListItem key={text} disablePadding>
-                      <ListItemButton
-                        onClick={() => {
-                          navigate(`/${lcText}`);
-                          setActive(lcText);
-                        }}
-                        sx={{
-                          marginX: "8px",
-                          marginY: "4px",
-                          borderRadius: "12px",
-                          backgroundColor:
-                            active === lcText
-                              ? theme.palette.primary.main
-                              : "transparent",
-                          color:
-                            active === lcText
-                              ? theme.palette.common.white
-                              : theme.palette.text.secondary,
-                          "&:hover": {
-                            backgroundColor:
-                              active === lcText
-                                ? theme.palette.action.hoverButton
-                                : theme.palette.action.hover,
-                            color:
-                              active === lcText
-                                ? theme.palette.common.gray
-                                : theme.palette.text.secondary,
-                          },
-                          transition: "all 0.3s ease",
-                        }}
-                      >
-                        <ListItemIcon
-                          sx={{
-                            minWidth: "36px",
-                            ml: "0.5rem",
-                            mr: "0",
-                            fontSize: "20px",
-                            color:
-                              active === lcText
-                                ? theme.palette.common.white
-                                : theme.palette.text.secondary,
-                          }}
-                        >
-                          {icon}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={text}
-                          primaryTypographyProps={{
-                            fontWeight: 600,
-                            fontSize: "15px",
-                            letterSpacing: "0.03rem",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        />
-                      </ListItemButton>
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </>
-          ) : (
-            <List>
-              {navItems.map(({ text, icon }) => {
-                if (!icon) {
-                  return (
-                    <Divider
-                      key={text}
-                      sx={{
-                        my: 1.5,
-                        mx: 2,
+                      />
+                    )}
+                  </ListItemButton>
+                </ListItem>
+              );
 
-                        borderColor: theme.palette.divider,
-                      }}
-                    />
-                  );
-                }
-                const lcText = text.toLowerCase();
-                return (
-                  <ListItem key={text} disablePadding>
-                    <ListItemButton
-                      onClick={() => {
-                        navigate(`/${lcText}`);
-                        setActive(lcText);
-                      }}
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        marginX: "8px",
-                        marginY: "6px",
-                        borderRadius: "12px",
-                        minHeight: "48px",
-                        backgroundColor:
-                          active === lcText
-                            ? theme.palette.primary.main
-                            : "transparent",
-                        color:
-                          active === lcText
-                            ? theme.palette.common.white
-                            : theme.palette.text.secondary,
-                        "&:hover": {
-                          backgroundColor:
-                            active === lcText
-                              ? theme.palette.action.hoverButton
-                              : theme.palette.action.hover,
-                        },
-                        transition: "all 0.3s ease",
-                      }}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: "auto",
-                          justifyContent: "center",
-                          color:
-                            active === lcText
-                              ? theme.palette.common.white
-                              : theme.palette.text.secondary,
-                          fontSize: "20px",
-                        }}
-                      >
-                        {React.cloneElement(icon, {
-                          style: { fontSize: "1.25rem" },
-                        })}
-                      </ListItemIcon>
-                    </ListItemButton>
-                  </ListItem>
-                );
-              })}
-            </List>
-          )}
+              // Wrap with Tooltip showing item name when collapsed
+              return showText ? (
+                button
+              ) : (
+                <Tooltip key={text} title={text} placement="right" arrow>
+                  {button}
+                </Tooltip>
+              );
+            })}
+          </List>
         </Box>
       </Drawer>
     </Box>
