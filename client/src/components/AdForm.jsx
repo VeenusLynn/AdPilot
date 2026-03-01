@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Box,
   Button,
@@ -21,13 +21,15 @@ import {
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
-import { uploadImage } from "../state/api"; // ✅ Make sure this exists
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import { uploadImage } from "../state/api";
 
 const AdForm = ({ initialData = null, onCancel, onSubmit }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef(null);
   const [file, setFile] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -235,22 +237,53 @@ const AdForm = ({ initialData = null, onCancel, onSubmit }) => {
               <FormLabel sx={{ mb: 1, color: theme.palette.text.secondary }}>
                 Upload Image
               </FormLabel>
-              <TextField
+
+              {/* Hidden native file input — triggered by the Button below */}
+              <input
+                ref={fileInputRef}
                 type="file"
-                inputProps={{ accept: "image/*" }}
-                size="small"
-                fullWidth
+                accept="image/*"
+                style={{ display: "none" }}
                 onChange={(e) => {
-                  if (e.target.files?.[0]) {
-                    setFile(e.target.files[0]);
-                  }
+                  if (e.target.files?.[0]) setFile(e.target.files[0]);
                 }}
               />
-              {formData.imageUrl && (
-                <Typography variant="caption" sx={{ mt: 1 }}>
-                  Current: {formData.imageUrl}
+
+              <Box display="flex" alignItems="center" gap={2}>
+                <Button
+                  variant="outlined"
+                  startIcon={<FileUploadOutlinedIcon />}
+                  onClick={() => fileInputRef.current?.click()}
+                  sx={{
+                    borderRadius: "10px",
+                    textTransform: "none",
+                    fontWeight: 600,
+                    fontSize: "14px",
+                    px: 2.5,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Choose Image
+                </Button>
+
+                <Typography
+                  variant="body2"
+                  color={file ? "text.primary" : "text.secondary"}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {file
+                    ? file.name
+                    : formData.imageUrl
+                      ? `Current: ${formData.imageUrl.split("/").pop()}`
+                      : "No file chosen"}
                 </Typography>
-              )}
+              </Box>
             </FormControl>
 
             {/* Link URL */}
