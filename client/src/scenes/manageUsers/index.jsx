@@ -112,13 +112,14 @@ const ManageUsers = () => {
 
   // ── Save user ─────────────────────────────────────────────────────────
 
-  const handleSave = async (id, payload) => {
+  // keepOpen=true: used by Basic Info zone so dialog stays open for further edits
+  const handleSave = async (id, payload, keepOpen = false) => {
     setSaving(true);
     try {
       const res = await updateAdminUser(id, payload);
       setUsers((prev) => prev.map((u) => (u._id === id ? res.data.user : u)));
       enqueueSnackbar("User updated successfully", { variant: "success" });
-      setEditTarget(null);
+      if (!keepOpen) setEditTarget(null);
     } catch (err) {
       enqueueSnackbar(err.response?.data?.message || "Failed to update user", {
         variant: "error",

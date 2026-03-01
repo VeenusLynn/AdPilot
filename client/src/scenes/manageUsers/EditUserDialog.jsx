@@ -16,17 +16,22 @@ import {
   InputAdornment,
   IconButton,
   CircularProgress,
-  Alert,
   useTheme,
 } from "@mui/material";
-import { Visibility, VisibilityOff, LockOutlined } from "@mui/icons-material";
+import {
+  Visibility,
+  VisibilityOff,
+  LockOutlined,
+  WarningAmberOutlined,
+} from "@mui/icons-material";
 
 /**
- * EditUserDialog
+ * EditUserDialog — two independent zones:
  *
- * Sensitive-change detection:
- *   If role changes OR newPassword is non-empty → adminPassword field appears.
- *   The admin must confirm their own password before the update is sent.
+ * 1. Basic Info  (name + email) — saved immediately, no admin password needed.
+ * 2. Danger Zone (role + password) — admin must confirm their own password first.
+ *
+ * Each zone has its own Save button that only sends the relevant fields.
  */
 const EditUserDialog = ({
   open,
@@ -37,82 +42,120 @@ const EditUserDialog = ({
   saving,
 }) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === "dark";
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
+  // ── Basic info form ──────────────────────────────────────────────────────
+  const [basicForm, setBasicForm] = useState({ name: "", email: "" });
+  const [basicErrors, setBasicErrors] = useState({});
+
+  // ── Danger zone form ─────────────────────────────────────────────────────
+  const [dangerForm, setDangerForm] = useState({
     role: "viewer",
     newPassword: "",
     adminPassword: "",
   });
+  const [dangerErrors, setDangerErrors] = useState({});
   const [showNew, setShowNew] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
-  const [errors, setErrors] = useState({});
 
-  // Sync form when a different user is opened
+  // ── Track which zone is currently saving ─────────────────────────────────
+  const [savingZone, setSavingZone] = useState(null); // "basic" | "danger"
+
+  const isSelf = user?._id === currentUserId;
+
+  // Sync when a different user is opened
   useEffect(() => {
     if (user) {
-      setForm({
-        name: user.name || "",
-        email: user.email || "",
+      setBasicForm({ name: user.name || "", email: user.email || "" });
+      setDangerForm({
         role: user.role || "viewer",
         newPassword: "",
         adminPassword: "",
       });
-      setErrors({});
+      setBasicErrors({});
+      setDangerErrors({});
+      setShowNew(false);
+      setShowAdmin(false);
+      setSavingZone(null);
     }
   }, [user]);
 
-  const isSelf = user?._id === currentUserId;
-  const sensitiveChange =
-    form.role !== user?.role || form.newPassword.length > 0;
+  const sharedSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
 
-  const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+  // ── Basic info handlers ──────────────────────────────────────────────────
+  const handleBasicChange = (field) => (e) => {
+    setBasicForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (basicErrors[field])
+      setBasicErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    if (!form.name.trim() || form.name.trim().length < 2) {
-      newErrors.name = "Name must be at least 2 characters";
-    }
-    if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
+  const validateBasic = () => {
+    const errs = {};
+    if (!basicForm.name.trim() || basicForm.name.trim().length < 2)
+      errs.name = "Name must be at least 2 characters";
     if (
-      form.newPassword &&
+      !basicForm.email.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(basicForm.email)
+    )
+      errs.email = "Please enter a valid email";
+    setBasicErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSaveBasic = async () => {
+    if (!validateBasic()) return;
+    setSavingZone("basic");
+    // keepOpen=true so the dialog stays open — user may still want to apply danger-zone changes
+    await onSave(
+      user._id,
+      {
+        name: basicForm.name.trim(),
+        email: basicForm.email.trim().toLowerCase(),
+      },
+      true,
+    );
+    setSavingZone(null);
+  };
+
+  // ── Danger zone handlers ─────────────────────────────────────────────────
+  const handleDangerChange = (field) => (e) => {
+    setDangerForm((prev) => ({ ...prev, [field]: e.target.value }));
+    if (dangerErrors[field])
+      setDangerErrors((prev) => ({ ...prev, [field]: "" }));
+  };
+
+  const validateDanger = () => {
+    const errs = {};
+    if (
+      dangerForm.newPassword &&
       !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}/.test(
-        form.newPassword,
+        dangerForm.newPassword,
       )
     ) {
-      newErrors.newPassword =
+      errs.newPassword =
         "8+ chars with uppercase, lowercase, number, and symbol";
     }
-    if (sensitiveChange && !form.adminPassword) {
-      newErrors.adminPassword =
-        "Your password is required to confirm this change";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (!dangerForm.adminPassword)
+      errs.adminPassword =
+        "Your admin password is required to confirm this change";
+    setDangerErrors(errs);
+    return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = () => {
-    if (!validate()) return;
+  const handleSaveDanger = async () => {
+    if (!validateDanger()) return;
+    setSavingZone("danger");
     const payload = {
-      name: form.name.trim(),
-      email: form.email.trim().toLowerCase(),
-      role: form.role,
+      role: dangerForm.role,
+      adminPassword: dangerForm.adminPassword,
     };
-    if (form.newPassword) payload.newPassword = form.newPassword;
-    if (sensitiveChange) payload.adminPassword = form.adminPassword;
-    onSave(user._id, payload);
+    if (dangerForm.newPassword) payload.newPassword = dangerForm.newPassword;
+    await onSave(user._id, payload);
+    setSavingZone(null);
   };
 
-  const sharedSx = { "& .MuiOutlinedInput-root": { borderRadius: "10px" } };
-  const passwordAdornment = (show, toggle) => ({
+  // ── Visibility toggle adornment ──────────────────────────────────────────
+  const visToggle = (show, toggle) => ({
     endAdornment: (
       <InputAdornment position="end">
         <IconButton size="small" onClick={toggle} tabIndex={-1} edge="end">
@@ -125,6 +168,10 @@ const EditUserDialog = ({
       </InputAdornment>
     ),
   });
+
+  // ── Danger zone colours ──────────────────────────────────────────────────
+  const dangerBg = isDark ? "rgba(211,47,47,0.08)" : "rgba(211,47,47,0.05)";
+  const dangerBorder = theme.palette.error.main;
 
   return (
     <Dialog
@@ -139,7 +186,8 @@ const EditUserDialog = ({
         },
       }}
     >
-      <DialogTitle sx={{ fontWeight: 700, fontSize: "17px", pb: 1 }}>
+      {/* ── Dialog header ─────────────────────────────────────────────── */}
+      <DialogTitle sx={{ fontWeight: 700, fontSize: "17px", pb: 0, pt: 3 }}>
         Edit User
         <Typography variant="body2" color="text.secondary" mt={0.25}>
           {user?.email}
@@ -147,140 +195,232 @@ const EditUserDialog = ({
       </DialogTitle>
 
       <DialogContent
-        sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 1 }}
+        sx={{
+          px: 3,
+          pt: 2.5,
+          pb: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0,
+        }}
       >
-        {/* Basic info */}
-        <TextField
-          label="Name"
-          fullWidth
-          size="small"
-          value={form.name}
-          onChange={handleChange("name")}
-          error={Boolean(errors.name)}
-          helperText={errors.name || " "}
-          sx={sharedSx}
-        />
-        <TextField
-          label="Email"
-          type="email"
-          fullWidth
-          size="small"
-          value={form.email}
-          onChange={handleChange("email")}
-          error={Boolean(errors.email)}
-          helperText={errors.email || " "}
-          sx={sharedSx}
-        />
+        {/* ── Zone 1: Basic Info ──────────────────────────────────────── */}
+        <Typography
+          sx={{
+            fontSize: "12px",
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.07em",
+            color: theme.palette.text.secondary,
+            mb: 1.5,
+          }}
+        >
+          Basic Info
+        </Typography>
 
-        {/* Role — disabled if editing yourself */}
-        <FormControl fullWidth size="small">
-          <InputLabel>Role</InputLabel>
-          <Select
-            value={form.role}
-            label="Role"
-            onChange={handleChange("role")}
-            disabled={isSelf}
-            sx={{ borderRadius: "10px" }}
+        <Box display="flex" flexDirection="column" gap={2} mb={1}>
+          <TextField
+            label="Name"
+            fullWidth
+            size="small"
+            value={basicForm.name}
+            onChange={handleBasicChange("name")}
+            error={Boolean(basicErrors.name)}
+            helperText={basicErrors.name || " "}
+            sx={sharedSx}
+          />
+          <TextField
+            label="Email"
+            type="email"
+            fullWidth
+            size="small"
+            value={basicForm.email}
+            onChange={handleBasicChange("email")}
+            error={Boolean(basicErrors.email)}
+            helperText={basicErrors.email || " "}
+            sx={sharedSx}
+          />
+        </Box>
+
+        <Box display="flex" justifyContent="flex-end" mb={3}>
+          <Button
+            variant="contained"
+            size="small"
+            onClick={handleSaveBasic}
+            disabled={saving && savingZone === "basic"}
+            startIcon={
+              saving && savingZone === "basic" ? (
+                <CircularProgress size={13} color="inherit" />
+              ) : null
+            }
+            sx={{
+              borderRadius: "9px",
+              textTransform: "none",
+              fontWeight: 600,
+              color: "#fff",
+              px: 2.5,
+            }}
           >
-            <MenuItem value="admin">Admin</MenuItem>
-            <MenuItem value="viewer">Viewer</MenuItem>
-          </Select>
-          {isSelf && (
+            {saving && savingZone === "basic" ? "Saving…" : "Save Info"}
+          </Button>
+        </Box>
+
+        <Divider sx={{ mb: 3 }} />
+
+        {/* ── Zone 2: Danger Zone ─────────────────────────────────────── */}
+        <Box
+          sx={{
+            borderRadius: "12px",
+            border: `1.5px solid ${dangerBorder}`,
+            backgroundColor: dangerBg,
+            p: 2.5,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+          }}
+        >
+          {/* Danger zone header */}
+          <Box display="flex" alignItems="center" gap={1}>
+            <WarningAmberOutlined
+              fontSize="small"
+              sx={{ color: theme.palette.error.main }}
+            />
+            <Typography
+              sx={{
+                fontSize: "12px",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+                color: theme.palette.error.main,
+              }}
+            >
+              Danger Zone
+            </Typography>
+          </Box>
+
+          <Typography
+            variant="body2"
+            sx={{ color: theme.palette.text.secondary, mt: -1 }}
+          >
+            Changes here require your admin password to confirm. Role changes
+            cannot be undone without another admin action.
+          </Typography>
+
+          {/* Role select */}
+          <FormControl fullWidth size="small">
+            <InputLabel>Role</InputLabel>
+            <Select
+              value={dangerForm.role}
+              label="Role"
+              onChange={handleDangerChange("role")}
+              disabled={isSelf}
+              sx={{ borderRadius: "10px" }}
+            >
+              <MenuItem value="admin">Admin</MenuItem>
+              <MenuItem value="viewer">Viewer</MenuItem>
+            </Select>
+            {isSelf && (
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                mt={0.5}
+                ml={0.5}
+              >
+                You cannot change your own role
+              </Typography>
+            )}
+          </FormControl>
+
+          {/* New password */}
+          <TextField
+            label="New password"
+            type={showNew ? "text" : "password"}
+            fullWidth
+            size="small"
+            value={dangerForm.newPassword}
+            onChange={handleDangerChange("newPassword")}
+            error={Boolean(dangerErrors.newPassword)}
+            helperText={
+              dangerErrors.newPassword || "Leave blank to keep current password"
+            }
+            InputProps={visToggle(showNew, () => setShowNew((p) => !p))}
+            sx={sharedSx}
+          />
+
+          {/* Divider inside danger zone */}
+          <Divider sx={{ borderColor: "rgba(211,47,47,0.25)" }} />
+
+          {/* Admin password confirmation */}
+          <Box>
             <Typography
               variant="caption"
-              color="text.secondary"
-              mt={0.5}
-              ml={0.5}
+              sx={{
+                display: "block",
+                mb: 1,
+                color: theme.palette.error.main,
+                fontWeight: 600,
+              }}
             >
-              You cannot change your own role
+              Sensitive change — confirm your admin password to proceed
             </Typography>
-          )}
-        </FormControl>
-
-        <Divider />
-
-        {/* Optional password change */}
-        <Typography sx={{ fontSize: "13px", fontWeight: 600 }}>
-          Change Password{" "}
-          <Typography
-            component="span"
-            sx={{ fontSize: "12px", color: "text.secondary" }}
-          >
-            (leave blank to keep current)
-          </Typography>
-        </Typography>
-        <TextField
-          label="New password"
-          type={showNew ? "text" : "password"}
-          fullWidth
-          size="small"
-          value={form.newPassword}
-          onChange={handleChange("newPassword")}
-          error={Boolean(errors.newPassword)}
-          helperText={errors.newPassword || " "}
-          InputProps={passwordAdornment(showNew, () => setShowNew((p) => !p))}
-          sx={sharedSx}
-        />
-
-        {/* Admin password confirmation — appears when sensitive change detected */}
-        {sensitiveChange && (
-          <>
-            <Divider />
-            <Alert severity="warning" sx={{ borderRadius: "10px", py: 0.5 }}>
-              <Typography variant="caption" fontWeight={600}>
-                Sensitive change — confirm your admin password to proceed
-              </Typography>
-            </Alert>
             <TextField
               label="Your admin password"
               type={showAdmin ? "text" : "password"}
               fullWidth
               size="small"
-              value={form.adminPassword}
-              onChange={handleChange("adminPassword")}
-              error={Boolean(errors.adminPassword)}
-              helperText={errors.adminPassword || " "}
+              value={dangerForm.adminPassword}
+              onChange={handleDangerChange("adminPassword")}
+              error={Boolean(dangerErrors.adminPassword)}
+              helperText={dangerErrors.adminPassword || " "}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    <LockOutlined fontSize="small" color="warning" />
+                    <LockOutlined fontSize="small" color="error" />
                   </InputAdornment>
                 ),
-                ...(passwordAdornment(showAdmin, () => setShowAdmin((p) => !p))
-                  .endAdornment && {
-                  endAdornment: passwordAdornment(showAdmin, () =>
-                    setShowAdmin((p) => !p),
-                  ).endAdornment,
-                }),
+                ...visToggle(showAdmin, () => setShowAdmin((p) => !p)),
               }}
               sx={sharedSx}
             />
-          </>
-        )}
+          </Box>
+
+          {/* Danger-zone save button */}
+          <Box display="flex" justifyContent="flex-end">
+            <Button
+              variant="contained"
+              size="small"
+              color="error"
+              onClick={handleSaveDanger}
+              disabled={saving && savingZone === "danger"}
+              startIcon={
+                saving && savingZone === "danger" ? (
+                  <CircularProgress size={13} color="inherit" />
+                ) : null
+              }
+              sx={{
+                borderRadius: "9px",
+                textTransform: "none",
+                fontWeight: 600,
+                color: "#fff",
+                px: 2.5,
+              }}
+            >
+              {saving && savingZone === "danger"
+                ? "Saving…"
+                : "Save Critical Changes"}
+            </Button>
+          </Box>
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+      <DialogActions sx={{ px: 3, pb: 2.5, pt: 2 }}>
         <Button
           variant="outlined"
           onClick={onClose}
           disabled={saving}
           sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
         >
-          Cancel
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleSubmit}
-          disabled={saving}
-          startIcon={saving && <CircularProgress size={14} color="inherit" />}
-          sx={{
-            borderRadius: "10px",
-            textTransform: "none",
-            fontWeight: 600,
-            color: "#fff",
-          }}
-        >
-          {saving ? "Saving…" : "Save Changes"}
+          Close
         </Button>
       </DialogActions>
     </Dialog>
