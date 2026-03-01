@@ -106,7 +106,11 @@ const Campaigns = () => {
   const [adToDelete, setAdToDelete] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchAds());
+    dispatch(fetchAds())
+      .unwrap()
+      .catch(() => {
+        enqueueSnackbar("Failed to load campaigns", { variant: "error" });
+      });
   }, [dispatch]);
 
   const handleSort = (key) => {

@@ -53,7 +53,9 @@ const ManageUsers = () => {
       const res = await getAdminUsers();
       setUsers(res.data.users);
     } catch (err) {
-      setError(err.response?.data?.message || "Failed to load users");
+      const msg = err.response?.data?.message || "Failed to load users";
+      setError(msg);
+      enqueueSnackbar(msg, { variant: "error" });
     } finally {
       setLoading(false);
     }

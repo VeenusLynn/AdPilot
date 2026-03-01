@@ -21,12 +21,14 @@ import { login } from "../../state/userSlice";
 import { useDispatch } from "react-redux";
 import { unwrapResult } from "@reduxjs/toolkit";
 import validator from "validator";
+import { useSnackbar } from "notistack";
 import logo from "../../assets/AdPilot.png";
 
 const Login = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -64,7 +66,7 @@ const Login = () => {
     ) {
       setPasswordError(true);
       setPasswordErrorMessage(
-        "Password must be at least 8 characters long and include at least 1 lowercase letter, 1 uppercase letter, and 1 number."
+        "Password must be at least 8 characters long and include at least 1 lowercase letter, 1 uppercase letter, and 1 number.",
       );
       isValid = false;
     } else {
@@ -87,13 +89,22 @@ const Login = () => {
       navigate("/dashboard");
     } catch (error) {
       console.error("Login failed:", error);
-      if (error.response?.status === 400 || error.response?.status === 404) {
+      if (
+        error.response?.status === 400 ||
+        error.response?.status === 404 ||
+        error.status === 401
+      ) {
         setEmailError(true);
         setPasswordError(true);
         setEmailErrorMessage("Invalid email or password.");
         setPasswordErrorMessage("Invalid email or password.");
+        enqueueSnackbar("Wrong credentials, please try again.", {
+          variant: "error",
+        });
       } else {
-        alert("Server error, try again later.");
+        enqueueSnackbar("Server error, please try again later.", {
+          variant: "error",
+        });
       }
     }
   };

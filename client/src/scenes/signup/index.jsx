@@ -19,11 +19,13 @@ import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import validator from "validator";
 import { registerUser } from "../../state/api";
+import { useSnackbar } from "notistack";
 import logo from "../../assets/AdPilot.png";
 
 const SignUp = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -73,7 +75,7 @@ const SignUp = () => {
     ) {
       setPasswordError(true);
       setPasswordErrorMessage(
-        "Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol."
+        "Password must be at least 8 characters long and include uppercase, lowercase, number, and symbol.",
       );
       isValid = false;
     } else {
@@ -92,14 +94,16 @@ const SignUp = () => {
     try {
       const response = await registerUser({ name, email, password });
       console.log("User registered:", response.data);
+      enqueueSnackbar("Account created successfully. Please sign in.", {
+        variant: "success",
+      });
       navigate("/login");
     } catch (error) {
       console.error("Registration failed:", error);
-      if (error.response?.data?.message) {
-        alert(error.response.data.message);
-      } else {
-        alert("Registration failed. Please try again.");
-      }
+      const message =
+        error.response?.data?.message ||
+        "Registration failed. Please try again.";
+      enqueueSnackbar(message, { variant: "error" });
     }
   };
 
