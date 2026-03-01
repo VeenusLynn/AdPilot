@@ -27,7 +27,13 @@ const Layout = () => {
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
         />
-        <Box flexGrow={1} overflow="auto">
+        <Box
+          flexGrow={1}
+          overflow="auto"
+          sx={{
+            transition: "margin-left 300ms cubic-bezier(0.4, 0, 0.6, 1)",
+          }}
+        >
           <Outlet />
         </Box>
       </Box>

@@ -75,7 +75,17 @@ const Sidebar = ({
   const showText = isSidebarOpen;
 
   return (
-    <Box component="nav">
+    <Box
+      component="nav"
+      sx={{
+        width: drawerWidth,
+        flexShrink: 0,
+        transition: theme.transitions.create("width", {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.enteringScreen,
+        }),
+      }}
+    >
       <Drawer
         open
         variant={isNonMobile ? "permanent" : "temporary"}
